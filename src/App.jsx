@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import {
   Plane, Briefcase, Heart, MapPin,
   ShieldCheck, Clock, Armchair, Phone,
@@ -84,16 +84,47 @@ const FLEET_FEATURES = [
 
 export default function App() {
   const [menuOpen, setMenuOpen] = useState(false)
+  const [heroVisible, setHeroVisible] = useState(true)
+  const [nearFooter, setNearFooter] = useState(false)
+  const heroRef = useRef(null)
+  const footerRef = useRef(null)
+
+  useEffect(() => {
+    const hero = heroRef.current
+    const footer = footerRef.current
+    if (!hero || !footer) return
+
+    const heroObserver = new IntersectionObserver(
+      ([entry]) => setHeroVisible(entry.isIntersecting),
+      { rootMargin: '-64px 0px 0px 0px' }
+    )
+    heroObserver.observe(hero)
+
+    const footerObserver = new IntersectionObserver(
+      ([entry]) => setNearFooter(entry.isIntersecting),
+      { rootMargin: '0px 0px -10% 0px' }
+    )
+    footerObserver.observe(footer)
+
+    return () => {
+      heroObserver.disconnect()
+      footerObserver.disconnect()
+    }
+  }, [])
+
+  const hideFloatingCta = heroVisible || nearFooter
 
   return (
     <div className="min-h-screen bg-bg text-text font-sans">
 
-      {/* Floating WhatsApp */}
+      {/* Floating WhatsApp: redundant while the hero's own WhatsApp CTA or the footer's are already in view */}
       <a
         href={WA_URL}
         target="_blank"
         rel="noopener noreferrer"
-        className="fixed bottom-6 right-6 z-50 flex items-center gap-2 bg-accent hover:bg-accent/90 text-bg px-5 py-3 rounded-sm shadow-2xl transition-colors duration-200 text-sm font-medium"
+        aria-hidden={hideFloatingCta}
+        tabIndex={hideFloatingCta ? -1 : 0}
+        className={`fixed bottom-6 right-6 z-50 flex items-center gap-2 bg-accent hover:bg-accent/90 text-bg px-5 py-3 rounded-sm shadow-2xl transition-opacity motion-reduce:transition-none duration-200 text-sm font-medium ${hideFloatingCta ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}
       >
         <MessageCircle className="w-4 h-4" aria-hidden="true" />
         WhatsApp
@@ -121,7 +152,7 @@ export default function App() {
             </a>
           </div>
           <button
-            className="md:hidden p-2 -mr-2 text-text-muted hover:text-text transition-colors"
+            className="md:hidden min-w-[44px] min-h-[44px] flex items-center justify-center -mr-2 text-text-muted hover:text-text transition-colors"
             onClick={() => setMenuOpen(v => !v)}
             aria-label="Toggle menu"
             aria-expanded={menuOpen}
@@ -157,7 +188,7 @@ export default function App() {
 
       <main>
         {/* Hero */}
-        <section className="relative min-h-screen flex flex-col items-center justify-center text-center px-6 pt-16 overflow-hidden">
+        <section ref={heroRef} className="relative min-h-screen flex flex-col items-center justify-center text-center px-6 pt-16 overflow-hidden">
           <div className="absolute inset-0 pointer-events-none">
             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[500px] bg-accent/5 rounded-full blur-[120px]" />
           </div>
@@ -171,7 +202,7 @@ export default function App() {
           <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-line to-transparent" />
 
           <div className="relative z-10 max-w-3xl mx-auto">
-            <p className="text-accent/70 text-[10px] tracking-[0.5em] uppercase mb-10 font-medium">
+            <p className="text-accent/85 text-[10px] tracking-[0.5em] uppercase mb-10 font-medium">
               Private Chauffeur, United Arab Emirates
             </p>
             <h1
@@ -351,7 +382,7 @@ export default function App() {
       </main>
 
       {/* Footer */}
-      <footer className="border-t border-line py-10 px-6">
+      <footer ref={footerRef} className="border-t border-line py-10 px-6">
         <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6 text-center md:text-left">
           <span
             className="text-accent text-xl tracking-[0.3em] font-serif font-light"

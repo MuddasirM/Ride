@@ -59,7 +59,10 @@ function lowestSeasonValue(row, seasons) {
   const values = seasons
     .map((season) => row[season.id])
     .filter((value) => typeof value === 'number')
-  return values.length ? Math.min(...values) : null
+  if (values.length < 2) return null
+  const min = Math.min(...values)
+  const allEqual = values.every((value) => value === min)
+  return allEqual ? null : min
 }
 
 function digitsOnly(phone) {
@@ -67,7 +70,7 @@ function digitsOnly(phone) {
 }
 
 function ContactButton({ method, phone, serviceName }) {
-  const baseClasses = 'inline-flex items-center justify-center gap-2 min-h-[44px] px-5 py-3 rounded-sm border border-line text-text text-sm hover:border-accent hover:bg-bg/40 transition-colors duration-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2'
+  const baseClasses = 'inline-flex items-center justify-center gap-2 min-h-[44px] px-5 py-3 rounded-sm border border-line text-text text-sm hover:border-accent hover:bg-bg/40 transition-colors duration-200'
 
   if (method === 'call') {
     return (
